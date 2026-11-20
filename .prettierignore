@@ -1,0 +1,13 @@
+node_modules
+.next
+.data
+coverage
+test-results
+playwright-report
+blob-report
+drizzle
+package-lock.json
+next-env.d.ts
+AGENTS.md
+# shadcn/ui generated primitives keep upstream formatting
+src/components/ui
