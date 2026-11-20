@@ -1,6 +1,15 @@
 # Spec: Expense Tracker (Qatar · QAR/PKR)
 
-Status: **Draft — awaiting approval** · Last updated: 2026-11-21
+Status: **Approved 2026-11-21 · Built (Phases 0–6)**. Deployment waits on your Neon and Vercel accounts. Last updated: 2026-11-21
+
+> **Changes made while building** (decisions differ from the draft below where noted):
+>
+> - Local development needs no setup: without `DATABASE_URL` the app uses a local PGlite database in `.data/pglite`, auto-migrated and seeded. Neon is used whenever `DATABASE_URL` is set.
+> - Production driver is `drizzle-orm/neon-http` (no interactive transactions).
+> - Dropped `react-hook-form`, `date-fns` and `next-themes`: forms are small controlled components validated with the shared Zod schemas, dates use `Intl` with `Asia/Qatar`, and the theme uses a pre-paint inline script.
+> - Category palette keys are `maroon, teal, amber, indigo, olive, rose, sky, coral, violet, brown`, validated for colour-blind separation in light and dark.
+> - PIN hash format is `scrypt:<salt>:<hash>`, with no dollar signs, because `.env` loading would expand them as variables.
+> - The home page (`/`) shows the current month directly instead of redirecting; while December 2026 is still ahead, it shows December.
 
 ## 1. Objective
 
@@ -58,8 +67,7 @@ Latest stable versions as of 2026-11-21; exact versions are pinned in `package.j
 | Components               | shadcn/ui (Radix primitives), lucide-react icons, sonner toasts                               | latest                                                                     |
 | Charts                   | Recharts (via shadcn chart components)                                                        | 3.11.x                                                                     |
 | Validation               | Zod                                                                                           | 4.6.x                                                                      |
-| Forms                    | react-hook-form + @hookform/resolvers                                                         | latest                                                                     |
-| Dates                    | date-fns + @date-fns/tz (all month logic in `Asia/Qatar`)                                     | latest                                                                     |
+| Dates                    | `Intl` APIs (all month logic in `Asia/Qatar`)                                                 | built in                                                                   |
 | Database                 | PostgreSQL on **Neon** (via Vercel Marketplace)                                               | —                                                                          |
 | ORM / migrations         | Drizzle ORM + drizzle-kit                                                                     | 0.45.x / 0.31.x                                                            |
 | DB drivers               | `@neondatabase/serverless` (dev + prod), `@electric-sql/pglite` (tests, optional offline dev) | 1.2.x / 0.5.x                                                              |
@@ -68,9 +76,9 @@ Latest stable versions as of 2026-11-21; exact versions are pinned in `package.j
 | Hosting                  | Vercel                                                                                        | —                                                                          |
 | Package manager          | npm                                                                                           | 10.x                                                                       |
 
-**Databases:** Neon branch `main` = production; Neon branch `dev` = local development; PGlite (in-process Postgres) = automated tests, so tests need no network and never touch real data.
+**Databases:** Neon branch `main` = production; Neon branch `dev` = local development when `DATABASE_URL` is set, otherwise a local PGlite file; PGlite (in-process Postgres) = automated tests, so tests need no network and never touch real data.
 
-**Exchange rates:** a free, no-key daily rate API (candidate: `open.er-api.com`; verified in Phase 3). Rates are cached per day in the DB; if the fetch fails the last cached rate is used; the user can always override the rate manually.
+**Exchange rates:** `open.er-api.com` (free, no key, covers QAR→PKR; attribution shown in Settings). Rates are cached per day in the DB; if the fetch fails the last cached rate is used; the user can always override the rate manually.
 
 ## 3. Commands
 
@@ -97,13 +105,13 @@ npm run check                   # lint + typecheck + test (run before every comm
 
 Environment variables (documented in `.env.example`; real values only in `.env.local` / Vercel):
 
-| Variable          | Purpose                                                             |
-| ----------------- | ------------------------------------------------------------------- |
-| `DATABASE_URL`    | Neon connection string (dev branch locally, main branch on Vercel)  |
-| `DATABASE_DRIVER` | `neon` (default) or `pglite`                                        |
-| `PGLITE_DIR`      | PGlite data dir when `DATABASE_DRIVER=pglite` (e.g. `.data/pglite`) |
-| `APP_PIN_HASH`    | scrypt hash of the PIN. **Unset = lock disabled** (local dev)       |
-| `SESSION_SECRET`  | Secret for signing the 30-day device cookie                         |
+| Variable          | Purpose                                                                     |
+| ----------------- | --------------------------------------------------------------------------- |
+| `DATABASE_URL`    | Neon connection string (dev branch locally, main branch on Vercel)          |
+| `DATABASE_DRIVER` | optional override: `neon` or `pglite` (default: neon if `DATABASE_URL` set) |
+| `PGLITE_DIR`      | PGlite data dir when `DATABASE_DRIVER=pglite` (e.g. `.data/pglite`)         |
+| `APP_PIN_HASH`    | scrypt hash of the PIN. **Unset = lock disabled** (local dev)               |
+| `SESSION_SECRET`  | Secret for signing the 30-day device cookie                                 |
 
 ## 4. Project Structure
 
