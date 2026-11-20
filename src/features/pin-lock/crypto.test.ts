@@ -12,7 +12,8 @@ const SECRET = "x".repeat(40);
 describe("PIN hashing", () => {
   it("verifies the right PIN and rejects others", () => {
     const stored = hashPin("482916");
-    expect(stored).toMatch(/^scrypt\$[0-9a-f]{32}\$[0-9a-f]{64}$/);
+    // No "$": Next.js expands $VARS in .env files, which would corrupt the hash.
+    expect(stored).toMatch(/^scrypt:[0-9a-f]{32}:[0-9a-f]{64}$/);
     expect(verifyPin("482916", stored)).toBe(true);
     expect(verifyPin("482917", stored)).toBe(false);
   });
@@ -23,7 +24,7 @@ describe("PIN hashing", () => {
 
   it("rejects malformed hashes", () => {
     expect(verifyPin("1234", "plain-text")).toBe(false);
-    expect(verifyPin("1234", "scrypt$00$11")).toBe(false);
+    expect(verifyPin("1234", "scrypt:00:11")).toBe(false);
   });
 });
 

@@ -10,15 +10,18 @@ import { SESSION_DAYS } from "./config";
 const KEY_LENGTH = 32;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** "scrypt$<salt hex>$<hash hex>" */
+/**
+ * "scrypt:<salt hex>:<hash hex>". No "$" on purpose: Next.js and shells expand
+ * $VARS in env values, which would silently corrupt the hash.
+ */
 export function hashPin(pin: string): string {
   const salt = randomBytes(16);
   const hash = scryptSync(pin, salt, KEY_LENGTH);
-  return `scrypt$${salt.toString("hex")}$${hash.toString("hex")}`;
+  return `scrypt:${salt.toString("hex")}:${hash.toString("hex")}`;
 }
 
 export function verifyPin(pin: string, stored: string): boolean {
-  const [scheme, saltHex, hashHex] = stored.split("$");
+  const [scheme, saltHex, hashHex] = stored.split(":");
   if (scheme !== "scrypt" || !saltHex || !hashHex) return false;
   const expected = Buffer.from(hashHex, "hex");
   if (expected.length !== KEY_LENGTH) return false;

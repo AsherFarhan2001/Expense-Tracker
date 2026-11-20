@@ -41,6 +41,10 @@ export default defineConfig({
           name: "integration",
           environment: "node",
           include: ["src/**/*.int.test.ts"],
+          // Each test boots an in-memory Postgres (PGlite WASM) and runs the
+          // migrations; that takes a few seconds when many files run at once.
+          testTimeout: 30_000,
+          hookTimeout: 30_000,
         },
       },
     ],
