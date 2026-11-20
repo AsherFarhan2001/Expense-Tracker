@@ -1,3 +1,6 @@
+// Validated with the dataviz palette checker (lightness band, chroma floor,
+// CVD and normal-vision separation, contrast) in both light and dark mode.
+// Order matters: adjacent slots are the ones checked for separation.
 export const CATEGORY_COLORS = [
   "maroon",
   "teal",
@@ -6,9 +9,9 @@ export const CATEGORY_COLORS = [
   "olive",
   "rose",
   "sky",
-  "sand",
+  "coral",
   "violet",
-  "slate",
+  "brown",
 ] as const;
 
 export type CategoryColor = (typeof CATEGORY_COLORS)[number];
@@ -19,7 +22,7 @@ export function isCategoryColor(value: unknown): value is CategoryColor {
 
 /** CSS colour for a category palette key (theme-aware via CSS variables). */
 export function categoryColor(key: string): string {
-  return `var(--cat-${isCategoryColor(key) ? key : "slate"})`;
+  return `var(--cat-${isCategoryColor(key) ? key : CATEGORY_COLORS[0]})`;
 }
 
 /** First palette colour not used yet, cycling when all are taken. */
