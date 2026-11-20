@@ -52,7 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <MobileNav />
           <Toaster
             position="bottom-center"
-            offset={{ bottom: 24 }}
+            offset={{ bottom: 88 }}
             mobileOffset={{ bottom: 88 }}
           />
         </TooltipProvider>
