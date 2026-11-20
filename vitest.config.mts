@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 // Three projects so each kind of test gets the right environment:
@@ -6,7 +7,14 @@ import { defineConfig } from "vitest/config";
 //   integration → src/**/*.int.test.ts   (node + PGlite, added in Phase 1)
 // Run one project:  npx vitest run --project unit
 export default defineConfig({
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    tsconfigPaths: true,
+    alias: {
+      "server-only": fileURLToPath(
+        new URL("./src/test/server-only-stub.ts", import.meta.url),
+      ),
+    },
+  },
   test: {
     projects: [
       {
