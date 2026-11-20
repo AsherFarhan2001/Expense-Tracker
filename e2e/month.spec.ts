@@ -29,7 +29,13 @@ test("adding an expense updates the total and survives a reload", async ({
 
   await page.reload();
   await expectTotal(page, before + 250);
-  await expect(page.getByTestId("item-Tea")).toContainText("2.50");
+  await page
+    .getByTestId("item-Tea")
+    .getByRole("button", { name: /^Tea/ })
+    .click();
+  await expect(
+    page.getByTestId("item-Tea").getByText("Karak").first(),
+  ).toBeVisible();
 });
 
 test("deleting an expense can be undone", async ({ page }) => {
@@ -60,13 +66,18 @@ test("a PKR expense counts in the QAR total at the saved rate", async ({
   // 10,000 PKR at 76.50 PKR/QAR = QAR 130.72
   await expectTotal(page, before + 13072);
 
+  const grocery = page.getByTestId("item-Grocery");
+  await grocery.getByRole("button", { name: /^Grocery/ }).click();
+  await expect(grocery.getByText("130.72").first()).toBeVisible();
+
   await page
-    .getByRole("group", { name: "Show totals in" })
+    .getByRole("radiogroup", { name: "Show totals in" })
     .getByRole("radio", { name: "PKR" })
     .click();
-  await expect(page.getByTestId("item-Grocery")).toContainText("10,000");
+  await expect(page.getByTestId("month-total")).toContainText("PKR");
+  await expect(grocery.getByText("10,000").first()).toBeVisible();
   await page
-    .getByRole("group", { name: "Show totals in" })
+    .getByRole("radiogroup", { name: "Show totals in" })
     .getByRole("radio", { name: "QAR" })
     .click();
   await expectTotal(page, before + 13072);
