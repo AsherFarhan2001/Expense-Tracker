@@ -57,7 +57,20 @@ describe("categories", () => {
     });
     expect(result).toEqual({
       ok: false,
-      error: 'You already have a category called "qatar".',
+      error: 'You already have a category called "Qatar".',
+    });
+  });
+
+  it("points to Settings when the name belongs to an archived category", async () => {
+    const saudi = idOf(
+      await createCategory(testDb.db, { name: "Saudi Arabia", color: "amber" }),
+    );
+    await setCategoryArchived(testDb.db, saudi, true);
+    expect(
+      await createCategory(testDb.db, { name: "saudi arabia", color: "teal" }),
+    ).toEqual({
+      ok: false,
+      error: '"Saudi Arabia" is archived. Restore it in Settings.',
     });
   });
 
@@ -116,6 +129,27 @@ describe("items", () => {
       (i) => i.id === tea.id,
     );
     expect(updated).toMatchObject({ name: "Karak", isFixed: false });
+  });
+
+  it("rejects a new item whose name is taken, pointing to Settings when archived", async () => {
+    const [qatar] = await getCatalog(testDb.db);
+    const haircut = qatar!.items.find((i) => i.name === "Haircut")!;
+    const item = (name: string) => ({
+      categoryId: qatar!.id,
+      name,
+      isFixed: true,
+      amountMode: "variable" as const,
+    });
+
+    expect(await createItem(testDb.db, item("lunch"))).toEqual({
+      ok: false,
+      error: '"Lunch" is already in this category.',
+    });
+    await setItemArchived(testDb.db, haircut.id, true);
+    expect(await createItem(testDb.db, item("Haircut"))).toEqual({
+      ok: false,
+      error: '"Haircut" is archived in this category. Restore it in Settings.',
+    });
   });
 
   it("archives items and reorders within a category", async () => {

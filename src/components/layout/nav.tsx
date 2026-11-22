@@ -37,7 +37,7 @@ export function MobileNavLinks({ pathname }: NavProps) {
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-md grid-cols-5">
         {NAV_LINKS.map(({ href, label, icon: Icon }) => {
           const active = pathname !== null && isActivePath(pathname, href);
           return (

@@ -1,7 +1,7 @@
 import "server-only";
-import { and, asc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { Database } from "@/db/client";
-import { categories, items } from "@/db/schema";
+import { categories, expenses, items } from "@/db/schema";
 import type { CategoryColor } from "@/lib/palette";
 import type { MoveDirection } from "./schemas";
 
@@ -18,14 +18,16 @@ export async function createCategory(
   input: { name: string; color: CategoryColor },
 ): Promise<MutationResult> {
   const [clash] = await db
-    .select({ id: categories.id })
+    .select({ name: categories.name, archivedAt: categories.archivedAt })
     .from(categories)
     .where(sameName(categories.name, input.name))
     .limit(1);
   if (clash)
     return {
       ok: false,
-      error: `You already have a category called "${input.name}".`,
+      error: clash.archivedAt
+        ? `"${clash.name}" is archived. Restore it in Settings.`
+        : `You already have a category called "${clash.name}".`,
     };
 
   const [last] = await db
@@ -40,6 +42,38 @@ export async function createCategory(
   return row
     ? { ok: true, id: row.id }
     : { ok: false, error: "Couldn't create the category." };
+}
+
+/**
+ * Permanently removes a category, its items and every expense logged under
+ * them (soft-deleted ones included). Foreign keys are `restrict` and neon-http
+ * has no transactions, so all three deletes run as ONE statement: data-modifying
+ * CTEs share a snapshot and the key checks run at the end, so it either fully
+ * happens or not at all.
+ */
+export async function deleteCategory(
+  db: Database,
+  id: string,
+): Promise<MutationResult> {
+  const categoryItems = db
+    .select({ id: items.id })
+    .from(items)
+    .where(eq(items.categoryId, id));
+  const removedExpenses = db
+    .$with("removed_expenses")
+    .as(db.delete(expenses).where(inArray(expenses.itemId, categoryItems)));
+  const removedItems = db
+    .$with("removed_items")
+    .as(db.delete(items).where(eq(items.categoryId, id)));
+
+  const rows = await db
+    .with(removedExpenses, removedItems)
+    .delete(categories)
+    .where(eq(categories.id, id))
+    .returning({ id: categories.id });
+  return rows.length > 0
+    ? { ok: true, id }
+    : { ok: false, error: "That category no longer exists." };
 }
 
 export async function updateCategory(
@@ -101,7 +135,7 @@ export async function createItem(
   if (!category) return { ok: false, error: "That category no longer exists." };
 
   const [clash] = await db
-    .select({ id: items.id })
+    .select({ name: items.name, archivedAt: items.archivedAt })
     .from(items)
     .where(
       and(
@@ -111,7 +145,12 @@ export async function createItem(
     )
     .limit(1);
   if (clash)
-    return { ok: false, error: `"${input.name}" is already in this category.` };
+    return {
+      ok: false,
+      error: clash.archivedAt
+        ? `"${clash.name}" is archived in this category. Restore it in Settings.`
+        : `"${clash.name}" is already in this category.`,
+    };
 
   const [last] = await db
     .select({ max: sql<number>`coalesce(max(${items.sortOrder}), -1)::int` })

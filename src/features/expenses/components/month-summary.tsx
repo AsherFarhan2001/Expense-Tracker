@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import type { ReactNode } from "react";
 import { CurrencyToggle } from "@/components/currency-toggle";
 import { Delta } from "@/components/delta";
 import { Money } from "@/components/money";
@@ -8,7 +9,13 @@ import { MonthSwitcher } from "@/components/month-switcher";
 import { Button } from "@/components/ui/button";
 import type { MonthRange } from "@/features/settings/range";
 import { useAnimatedNumber } from "@/hooks/use-animated-number";
-import { addMonths, formatMonthLabel, type MonthKey } from "@/lib/dates";
+import {
+  addMonths,
+  formatLongDate,
+  formatMonthLabel,
+  type DateKey,
+  type MonthKey,
+} from "@/lib/dates";
 import { formatMoney, type Currency } from "@/lib/money";
 import { categoryColor } from "@/lib/palette";
 import type { Ledger } from "../ledger";
@@ -20,6 +27,7 @@ const shareFormat = new Intl.NumberFormat("en-US", {
 
 type MonthSummaryProps = {
   month: MonthKey;
+  today: DateKey;
   isCurrentMonth: boolean;
   range: MonthRange;
   ledger: Ledger;
@@ -27,10 +35,13 @@ type MonthSummaryProps = {
   currency: Currency;
   onCurrencyChange: (currency: Currency) => void;
   onAdd: () => void;
+  /** Shown under the Add expense button. */
+  calendar: ReactNode;
 };
 
 export function MonthSummary({
   month,
+  today,
   isCurrentMonth,
   range,
   ledger,
@@ -38,6 +49,7 @@ export function MonthSummary({
   currency,
   onCurrencyChange,
   onAdd,
+  calendar,
 }: MonthSummaryProps) {
   const animatedTotal = useAnimatedNumber(ledger.total);
   const [monthName, year] = formatMonthLabel(month).split(" ");
@@ -67,6 +79,12 @@ export function MonthSummary({
           {year}
         </span>
       </h1>
+      <p className="-mt-3 text-sm text-muted-foreground">
+        Today is{" "}
+        <time dateTime={today} className="font-medium text-foreground">
+          {formatLongDate(today)}
+        </time>
+      </p>
 
       <div className="grid gap-1.5">
         <p className="text-sm text-muted-foreground">
@@ -107,6 +125,8 @@ export function MonthSummary({
         <Plus data-icon="inline-start" />
         Add expense
       </Button>
+
+      {calendar}
 
       {withSpending.length > 0 && (
         <section aria-label="Spending by category" className="grid gap-3">

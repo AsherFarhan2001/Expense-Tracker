@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { getDb } from "@/db/client";
+import { getCategoryUsage } from "@/features/catalog/queries";
 import { getRateForDay } from "@/features/currency/rates";
 import type { RateInfo } from "@/features/currency/types";
 import { getSettings } from "@/features/settings/queries";
@@ -17,9 +18,10 @@ export async function MonthScreen({ month }: { month: MonthKey | null }) {
   const range = navigableRange(settings.startMonth, today);
   const target = month ? clampMonth(month, range) : range.max;
 
-  const [data, rate] = await Promise.all([
+  const [data, rate, usage] = await Promise.all([
     getMonthData(db, target),
     getRateForDay(db, today),
+    getCategoryUsage(db),
   ]);
   const todayRate: RateInfo | null = rate
     ? { pkrPerQar: rate.pkrPerQar, rateDate: rate.rateDate, stale: rate.stale }
@@ -32,6 +34,7 @@ export async function MonthScreen({ month }: { month: MonthKey | null }) {
       today={today}
       range={range}
       todayRate={todayRate}
+      usage={usage}
       displayCurrency={settings.displayCurrency}
       defaultCurrency={settings.defaultCurrency}
     />

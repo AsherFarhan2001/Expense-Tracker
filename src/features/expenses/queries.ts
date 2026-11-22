@@ -10,7 +10,7 @@ import type {
   Suggestion,
 } from "./types";
 
-const entryColumns = {
+export const entryColumns = {
   id: expenses.id,
   itemId: expenses.itemId,
   spentOn: expenses.spentOn,

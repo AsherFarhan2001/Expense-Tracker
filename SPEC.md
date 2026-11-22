@@ -10,6 +10,11 @@ Status: **Approved 2026-11-21 · Built (Phases 0–6)**. Deployment waits on you
 > - Category palette keys are `maroon, teal, amber, indigo, olive, rose, sky, coral, violet, brown`, validated for colour-blind separation in light and dark.
 > - PIN hash format is `scrypt:<salt>:<hash>`, with no dollar signs, because `.env` loading would expand them as variables.
 > - The home page (`/`) shows the current month directly instead of redirecting; while December 2026 is still ahead, it shows December.
+> - 2026-11-21: categories for other countries (Pakistan, Saudi Arabia) and their items can now be added directly on the month page, not only in Settings (story 6).
+> - 2026-11-21: a category can be **deleted permanently** (with its items and all their expenses) after a confirmation that shows what will be removed. Archive stays the gentle option (story 6). The seed now creates Qatar only on first run, so deleting every category doesn't bring it back.
+> - 2026-11-21: new **Search** page (story 10): every expense of one category (e.g. _Umrah_) or matching a word, across all months, with totals.
+> - 2026-11-21: the month page shows **today's date** and a **live calendar** of the month in the left column (story 11).
+> - 2026-11-21: before tracking starts, the calendar shows **today's month** so today is always highlighted on the home page; categories on the month page can be **collapsed and expanded** (story 12).
 
 ## 1. Objective
 
@@ -33,7 +38,9 @@ A personal web app to record and review monthly spending while living in Qatar, 
 3. **Remove / edit an expense** — Deleting removes it immediately with an **Undo** toast (~5 s). Editing updates in place.
 4. **Live totals** — Item totals, category subtotals and the month's grand total update instantly on add/edit/delete (optimistic UI), and persist after refresh.
 5. **Currency** — Every expense is entered in QAR or PKR. On save, the app looks up that day's PKR-per-QAR rate (editable before saving) and stores it with the expense, plus the amount in both currencies. The month has **one grand total**, viewable in QAR (default) or PKR via a toggle. Changing rates later never changes past totals.
-6. **Custom categories** — User can add categories (e.g. _Pakistan_, _Saudi_) and items inside them. Any item can be marked _fixed_ (appears every month). All categories count toward the month total.
+6. **Custom categories (other countries)** — User can add categories for spending in other countries (e.g. _Pakistan_, _Saudi Arabia_) or anything else, and add their own items ("fields") inside each one. Any item can be marked _fixed_ (appears every month). All categories count toward the month total and appear in history and analysis.
+   - Both can be done **straight from the month page**: an _Add a category_ box under the ledger (with one-tap _Pakistan_ and _Saudi Arabia_ when they don't exist yet) and an _Add item_ action inside every category. Items added there show every month. Settings keeps the full editor (rename, recolour, reorder, archive, flags).
+   - **Remove a category:** _Archive_ hides it from new months and keeps its history. _Delete_ (category menu on the month page or in Settings, including archived ones) wipes the category, its items and every expense logged under it, from all months, History and Analysis. It asks first, stating how many items and expenses (and their total) will go, and offers _Archive instead_ when there are expenses. It can't be undone.
 7. **History** — A list of every month since December 2026 with total, number of entries, and change vs the previous month. Clicking opens that month (past months stay editable).
 8. **Analysis** — For a selected month:
    - **Item comparison:** each item, this month vs previous month (grouped bars + table with Δ and Δ%).
@@ -42,6 +49,18 @@ A personal web app to record and review monthly spending while living in Qatar, 
    - Biggest increases / decreases vs previous month.
    - All charts respect the QAR/PKR toggle.
 9. **Lock on the live site** — The deployed app asks for a PIN (no account, no email) on a new device/browser, then remembers that device for 30 days. No PIN in local development.
+10. **Search** — A _Search_ page (in the main navigation) finds expenses across **all months**:
+    - Pick a category (e.g. _Umrah_) to see only its expenses, and/or type words. Each word must match the category, item or note (case-insensitive), e.g. "umrah hotel".
+    - Shows the total (QAR/PKR toggle), number of expenses, the months they span, a breakdown by item, and the expenses grouped by month, newest first. Each month links to that month's page for editing.
+    - The search lives in the URL (`/search?category=…&q=…`), so a search can be bookmarked or reopened. Each category's ⋯ menu on the month page has _See all expenses_, which opens it.
+    - Shows the latest 500 matching expenses; totals and the item breakdown always cover every match.
+11. **Today and the month calendar** — The left column of the month page shows:
+    - **Today's date** in Qatar time under the month name (e.g. "Today is Saturday, 21 November 2026"), on every month page.
+    - A **calendar of the month being viewed**: weekday names (week starts on Sunday, the Qatari work week; Friday and Saturday shown as the weekend) and every date. Today is highlighted when it's in that month. Days with expenses show a dot, and hovering or a screen reader gives that day's total. Tapping a day opens _Add expense_ with that date filled in.
+    - It is **live**: today's date and highlight move at Qatar midnight and when the tab comes back into view, and the home page switches to the new month when a month begins.
+    - **Before tracking starts** (until 1 December 2026) the home page lists December, but the calendar shows **today's month with today highlighted**; its days are greyed out with a note saying when tracking starts.
+    - On a **past month**, the calendar shows that month and a _Today_ link back to the current month.
+12. **Collapse categories** — Each category heading on the month page is a toggle (chevron + name) that hides or shows its items. Its total, share and menu stay visible while collapsed. Collapsed categories are remembered on that device (browser storage) and apply to every month.
 
 ### Seed data
 
@@ -141,6 +160,7 @@ Expense-Tracker/
     │   ├── months/[month]/page.tsx    → month view, month = YYYY-MM
     │   ├── history/page.tsx
     │   ├── analysis/page.tsx          → ?month=YYYY-MM
+    │   ├── search/page.tsx            → ?category=<id>&q=words
     │   ├── settings/page.tsx          → categories, items, currency defaults
     │   └── unlock/page.tsx            → PIN screen
     ├── features/              → one folder per feature (see src/features/CLAUDE.md)
@@ -148,6 +168,7 @@ Expense-Tracker/
     │   ├── catalog/           → categories + items management
     │   ├── currency/          → rate fetch + cache, currency toggle
     │   ├── analysis/          → aggregations + chart components
+    │   ├── search/            → cross-month expense search + results
     │   └── pin-lock/          → PIN verify, cookie, guard
     ├── components/
     │   ├── ui/                → shadcn/ui generated primitives
@@ -183,6 +204,7 @@ Rules baked into the model:
 - Money is stored as **integer minor units** (1 QAR = 100 dirham, 1 PKR = 100 paisa). Never floats.
 - Both converted amounts are computed **once at save time** with the stored rate, so totals in either currency are plain sums and history never shifts.
 - Archiving an item/category hides it from future months; past months still show its entries.
+- Deleting a category (only after the confirmation dialog) removes it, its items and their expenses in **one SQL statement**, so it never half-finishes (the production driver has no transactions).
 - A month view shows: all active fixed items + any item that has entries in that month.
 
 ## 5. Code Style
@@ -295,8 +317,12 @@ Conventions:
 - [ ] Changing or refreshing today's rate does not change any previous month's totals.
 - [ ] Navigation cannot go before December 2026; the home page opens the current month in Qatar time.
 - [ ] Analysis shows every item's this-month vs previous-month amount and change; category shares add up to 100 % of the month total; trend shows all months since Dec 2026.
-- [ ] A new category ("Pakistan") with its own items can be added; its expenses appear in the month total and in the charts.
+- [ ] A new category ("Pakistan") with its own items can be added, from Settings or directly on the month page; its expenses appear in the month total and in the charts.
 - [ ] Archiving an item hides it from future months; past months still show its entries and totals.
+- [ ] Deleting a category asks first, then removes it with its items and expenses everywhere; month totals drop by exactly its amount, and the name can be reused.
+- [ ] Search for a category (e.g. Umrah) lists every one of its expenses from all months, and its total equals the sum of that category across those months; searching a word matches category, item and note.
+- [ ] The month page shows today's date and a calendar of all the month's days with weekday names; today is highlighted when it's in that month (and on the home page before tracking starts); tapping a day opens Add expense on that date.
+- [ ] Collapsing a category hides its items but keeps its total; it stays collapsed after a reload on the same device.
 - [ ] Works in current Chrome and Edge on desktop and at 375 px width with no horizontal scrolling.
 - [ ] Live site requires the PIN on a new device, remembers it for 30 days, and slows down repeated wrong guesses; local dev has no PIN.
 - [ ] `npm run check`, `npm run test:e2e` and `npm run build` all pass.
@@ -320,7 +346,7 @@ Mobile later: the responsive layout and the feature-module split (queries/action
 ## 10. Open Questions (defaults apply unless you say otherwise)
 
 1. **Extra fixed items** (Kahramaa bill, internet, Karwa, food delivery, gym, subscriptions, money sent home, committee/BC, charity, …) — _default: none for now; add any time in Settings._
-2. **Starting categories** — _default: only "Qatar" is seeded; you add "Pakistan", "Saudi" yourself._
+2. **Starting categories** — _default: only "Qatar" is seeded; you add "Pakistan", "Saudi Arabia" yourself (one tap each on the month page)._
 3. **Saudi expenses currency** — SAR isn't supported in v1; Saudi items are entered in QAR or PKR. _Default: OK._
 4. **Same-amount-every-month items** — _default: Accommodation and Mobile Package only._
 5. **PIN on the live site** — _default: yes, at least 6 digits._

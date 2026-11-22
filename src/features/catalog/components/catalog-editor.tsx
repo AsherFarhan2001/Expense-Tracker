@@ -8,6 +8,7 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  Trash2,
 } from "lucide-react";
 import {
   startTransition,
@@ -29,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import type { CatalogCategory, CatalogItem } from "@/features/expenses/types";
 import type { ActionResult } from "@/lib/action-result";
+import type { Currency } from "@/lib/money";
 import {
   categoryColor,
   nextCategoryColor,
@@ -36,7 +38,12 @@ import {
 } from "@/lib/palette";
 import { cn } from "@/lib/utils";
 import * as actions from "../actions";
+import type { CategoryUsageMap } from "../types";
 import { ColorPicker } from "./color-picker";
+import {
+  DeleteCategoryDialog,
+  type CategoryToDelete,
+} from "./delete-category-dialog";
 import { InlineNameForm } from "./inline-name-form";
 
 type Patch =
@@ -81,12 +88,31 @@ function useCatalogActions(initial: CatalogCategory[]) {
 
 export function CatalogEditor({
   catalog: initial,
+  usage,
+  currency,
 }: {
   catalog: CatalogCategory[];
+  usage: CategoryUsageMap;
+  currency: Currency;
 }) {
   const { catalog, run } = useCatalogActions(initial);
   const active = catalog.filter((c) => !c.archived);
   const archived = catalog.filter((c) => c.archived);
+  const [deleting, setDeleting] = useState<{
+    open: boolean;
+    category: CategoryToDelete;
+  } | null>(null);
+  const askToDelete = (category: CatalogCategory) =>
+    setDeleting({
+      open: true,
+      category: {
+        id: category.id,
+        name: category.name,
+        archived: category.archived,
+        itemCount: category.items.length,
+        usage: usage[category.id],
+      },
+    });
 
   return (
     <div className="grid gap-6">
@@ -97,6 +123,7 @@ export function CatalogEditor({
           isFirst={index === 0}
           isLast={index === active.length - 1}
           run={run}
+          onDelete={() => askToDelete(category)}
         />
       ))}
 
@@ -144,10 +171,30 @@ export function CatalogEditor({
                   <ArchiveRestore data-icon="inline-start" />
                   Restore
                 </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={`Delete ${category.name}`}
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => askToDelete(category)}
+                >
+                  <Trash2 />
+                </Button>
               </li>
             ))}
           </ul>
         </section>
+      )}
+
+      {deleting && (
+        <DeleteCategoryDialog
+          category={deleting.category}
+          currency={currency}
+          open={deleting.open}
+          onOpenChange={(open) =>
+            setDeleting((current) => current && { ...current, open })
+          }
+        />
       )}
     </div>
   );
@@ -160,11 +207,13 @@ function CategoryPanel({
   isFirst,
   isLast,
   run,
+  onDelete,
 }: {
   category: CatalogCategory;
   isFirst: boolean;
   isLast: boolean;
   run: Run;
+  onDelete: () => void;
 }) {
   const [renaming, setRenaming] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -280,6 +329,9 @@ function CategoryPanel({
               }
             >
               <Archive /> Archive category
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+              <Trash2 /> Delete category…
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

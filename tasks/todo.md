@@ -54,7 +54,44 @@ Phases follow `SPEC.md` §9. Each phase ended with `npm run check` and the e2e s
 - [ ] **You:** Neon `main` branch, Vercel project and environment variables (steps in README → "Put it on Vercel")
 - [ ] Live smoke test after the first deploy
 
+## Change request: other countries on the month page ✅
+
+- [x] "Add a category" box under the month ledger, with one-tap Pakistan / Saudi Arabia when missing
+- [x] "Add item" inside each category on the month page (new items show every month)
+- [x] A new, empty category shows "No items yet" with the item form open and focused
+- [x] Name clashes with an archived category or item say to restore it in Settings
+- [x] E2E: add a country and an item from the month page, log an expense in it, totals include it
+
+## Change request: delete a category ✅
+
+- [x] `deleteCategory`: removes the category, its items and all their expenses in one SQL statement
+- [x] Confirmation dialog states what goes (items, expenses, total) and offers "Archive instead"
+- [x] "Delete category…" in the category menu on the month page and in Settings; Delete on archived categories
+- [x] Seed creates Qatar only on first run, so deleting every category doesn't bring it back
+- [x] Tests: integration (delete, usage, seed), unit (wording), E2E (cancel, delete, totals, reload)
+
+## Change request: search expenses by category ✅
+
+- [x] `searchExpenses` query: category filter + words matched against category, item and note; exact totals and item breakdown
+- [x] Search page with category chips, search box (updates as you type), totals, by-item breakdown, results by month
+- [x] "Search" in the main navigation; "See all expenses" in each category's menu on the month page
+- [x] Tests: integration (matching, filters, deleted rows, totals), unit (grouping), E2E (Umrah category search, no overflow)
+
+## Change request: today's date and a live month calendar ✅
+
+- [x] Date helpers: calendar weeks (Sunday first), weekday, long date, time to next Qatar midnight
+- [x] `useToday`: today in Qatar that updates at midnight and when the tab is shown again; home page refreshes into a new month
+- [x] "Today is …" under the month name; calendar card with weekday names, today highlighted, dots on days with spending
+- [x] Tapping a day opens Add expense with that date
+- [x] Tests: unit (dates, daily totals), E2E (fixed clock: today highlighted, tap a day, dot after adding)
+
+## Change request: highlight today before tracking starts; collapsible categories ✅
+
+- [x] Calendar month rule: today's month before tracking starts, else the viewed month; out-of-range days disabled; Today link on past months
+- [x] Category heading toggles collapse/expand; remembered per device
+- [x] Tests: unit (calendar month rule), E2E (pre-start highlight, collapse survives reload)
+
 ## Open choices (defaults applied, see SPEC §10)
 
 - Extra fixed items (Kahramaa, internet, Karwa, food delivery, gym, subscriptions, money sent home…): none added; add any in Settings
-- Only "Qatar" is seeded; add Pakistan / Saudi in Settings
+- Only "Qatar" is seeded; add Pakistan / Saudi Arabia with one tap at the bottom of the month page

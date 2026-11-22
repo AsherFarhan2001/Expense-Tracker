@@ -12,4 +12,5 @@
 - `expenses.spent_on` is a `date` (`mode: "string"`, calendar day in Asia/Qatar), not a timestamp.
 - Soft delete: `expenses.deleted_at`. Every read filters `deleted_at IS NULL`, and the indexes are partial on that condition.
 - Archive, don't delete, categories and items (`archived_at`), so past months keep their history. Names are unique case-insensitively (expression indexes on `lower(name)`).
-- `seed.ts` is idempotent and only inserts when nothing exists, so user edits survive re-seeding.
+  - Exception: `deleteCategory` permanently removes a category with its items and expenses after the user confirms. Foreign keys are `restrict`, so it deletes all three tables in **one statement** (data-modifying CTEs); never split it into separate deletes, which could leave half the data behind on neon-http.
+- `seed.ts` is idempotent and only inserts when nothing exists, so user edits survive re-seeding. The default catalog (Qatar + items) is created only on first run, when the settings row is inserted, so deleting every category doesn't bring Qatar back.

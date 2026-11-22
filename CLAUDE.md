@@ -52,7 +52,7 @@ Only one `next dev` may run per project (Next 16 lockfile). `next build` can run
 - Money is **never** a float. Store and sum integer minor units, and format only at display time.
 - Every Server Action validates input with Zod and calls `requireUnlocked()` first.
 - Deleting an expense is a soft delete (`deleted_at`) so Undo works. Every query filters `deleted_at IS NULL`.
-- Archive categories and items rather than deleting them, so past months keep their history.
+- Archive categories and items rather than deleting them, so past months keep their history. The one exception is **Delete category** (`catalog/mutations.ts` → `deleteCategory`): a user-confirmed, permanent wipe of the category, its items and their expenses, done as a single SQL statement.
 - Tests never touch Neon or the network. Integration tests use in-memory PGlite (`src/test/db.ts`); e2e uses `.data/pglite-e2e` with a fixed rate of 76.5. Desktop and mobile e2e runs share one DB, so assert relative changes.
 - Ask before:
   - adding or upgrading dependencies

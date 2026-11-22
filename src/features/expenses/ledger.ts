@@ -1,3 +1,4 @@
+import type { DateKey } from "@/lib/dates";
 import type { Currency } from "@/lib/money";
 import type {
   CatalogCategory,
@@ -104,6 +105,21 @@ export function buildLedger(
   }
 
   return { total, entryCount: entries.length, categories };
+}
+
+/** Total spent on each day, in `currency`. Days with nothing logged are absent. */
+export function dailyTotals(
+  entries: readonly EntryView[],
+  currency: Currency,
+): Map<DateKey, number> {
+  const totals = new Map<DateKey, number>();
+  for (const entry of entries) {
+    totals.set(
+      entry.spentOn,
+      (totals.get(entry.spentOn) ?? 0) + amountIn(entry, currency),
+    );
+  }
+  return totals;
 }
 
 /** Relative change from `previous` to `current`; null when there's no baseline. */

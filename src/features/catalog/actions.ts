@@ -7,6 +7,7 @@ import { fail, failFromZod, ok, type ActionResult } from "@/lib/action-result";
 import * as mutations from "./mutations";
 import {
   archiveSchema,
+  categoryIdSchema,
   createCategorySchema,
   createItemSchema,
   moveSchema,
@@ -48,6 +49,14 @@ export async function archiveCategory(input: unknown): Promise<IdResult> {
       parsed.data.archived,
     ),
   );
+}
+
+/** Permanent: removes the category, its items and all their expenses. The UI confirms first. */
+export async function deleteCategory(input: unknown): Promise<IdResult> {
+  await requireUnlocked();
+  const parsed = categoryIdSchema.safeParse(input);
+  if (!parsed.success) return failFromZod(parsed.error);
+  return finish(await mutations.deleteCategory(await getDb(), parsed.data.id));
 }
 
 export async function moveCategory(input: unknown): Promise<IdResult> {

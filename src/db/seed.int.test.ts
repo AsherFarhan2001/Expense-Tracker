@@ -65,6 +65,19 @@ describe("seedDatabase", () => {
     });
   });
 
+  it("doesn't bring the default category back after you remove every category", async () => {
+    testDb = await createTestDb();
+    await testDb.db.delete(items);
+    await testDb.db.delete(categories);
+
+    await seedDatabase(testDb.db);
+    expect(await counts(testDb.db)).toEqual({
+      categories: 0,
+      items: 0,
+      settings: 1,
+    });
+  });
+
   it("enforces positive amounts at the database level", async () => {
     testDb = await createTestDb();
     const [item] = await testDb.db

@@ -25,6 +25,6 @@ features/expenses/
 - Queries and mutations never call `getDb()` themselves. Taking `db` as an argument is what lets tests pass in an in-memory PGlite.
 - Data crossing to the client is plain serialisable objects: amounts as integer minor units, dates as `YYYY-MM-DD` strings, timestamps as ISO strings. Components format amounts with `formatMoney()` or `<Money>`.
 - Interactive components use `useOptimistic` and `startTransition(async () => …)`. Keep the optimistic reducer pure and reuse the same pure function the server uses (`buildLedger`, `prepareExpense`).
-- A feature may import another feature's `queries`, `mutations`, `actions`, `schemas` or `types`, but not its components' internals. Shared UI goes in `src/components/`.
+- A feature may import another feature's `queries`, `mutations`, `actions`, `schemas`, `types` or pure helpers (e.g. `catalog/suggestions.ts`). Components stay inside their feature, with one deliberate exception: `catalog/components/delete-category-dialog.tsx` is shared by the month page and Settings so the delete wording and flow exist once. Shared UI otherwise goes in `src/components/`. For example, the month page's "Add a category" / "Add item" forms live in `expenses/components/` and call `catalog/actions`.
 - A type that a client component needs from a server-only module goes in a plain `types.ts`, e.g. `currency/types.ts`.
 - Logic that doesn't need the DB (totals, deltas, shares) is a pure function with unit tests. Keep it out of components.

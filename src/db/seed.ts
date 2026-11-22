@@ -7,12 +7,17 @@ import { DEFAULT_START_MONTH, SEED_CATEGORY, SEED_ITEMS } from "./seed-data";
  * Idempotent: creates the settings row, the default category and its fixed
  * items only if they don't exist yet. Never modifies existing rows, so user
  * edits (renames, archives) survive re-seeding.
+ *
+ * The default catalog is only created on first run (when the settings row is
+ * inserted), so deleting every category doesn't bring Qatar back on restart.
  */
 export async function seedDatabase(db: Database): Promise<void> {
-  await db
+  const firstRun = await db
     .insert(settings)
     .values({ id: 1, startMonth: DEFAULT_START_MONTH })
-    .onConflictDoNothing();
+    .onConflictDoNothing()
+    .returning({ id: settings.id });
+  if (firstRun.length === 0) return;
 
   const [existingCategories] = await db
     .select({ count: sql<number>`count(*)::int` })

@@ -32,6 +32,10 @@ export const updateItemSchema = z.object({
   amountMode: z.enum(["variable", "recurring"]).optional(),
 });
 
+export const categoryIdSchema = z.object({
+  id: z.uuid(),
+});
+
 export const archiveSchema = z.object({
   id: z.uuid(),
   archived: z.boolean(),

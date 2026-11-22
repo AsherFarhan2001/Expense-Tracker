@@ -7,6 +7,7 @@ import {
   CatalogEditor,
   CatalogLegend,
 } from "@/features/catalog/components/catalog-editor";
+import { getCategoryUsage } from "@/features/catalog/queries";
 import { getRateForDay, LIVE_SOURCE } from "@/features/currency/rates";
 import { getCatalog } from "@/features/expenses/queries";
 import { PinLockPanel } from "@/features/pin-lock/components/pin-lock-panel";
@@ -39,8 +40,9 @@ async function SettingsContent() {
   await connection();
   const db = await getDb();
   const today = todayInQatar();
-  const [catalog, settings, rate] = await Promise.all([
+  const [catalog, usage, settings, rate] = await Promise.all([
     getCatalog(db),
+    getCategoryUsage(db),
     getSettings(db),
     getRateForDay(db, today),
   ]);
@@ -51,7 +53,11 @@ async function SettingsContent() {
         <h2 id="catalog-heading" className="sr-only">
           Categories and items
         </h2>
-        <CatalogEditor catalog={catalog} />
+        <CatalogEditor
+          catalog={catalog}
+          usage={usage}
+          currency={settings.displayCurrency}
+        />
       </section>
 
       <aside className="grid gap-8 lg:sticky lg:top-20">

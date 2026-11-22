@@ -70,19 +70,31 @@ export function clampMonth(
   return key;
 }
 
+const qatarDayFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: QATAR_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 export function todayInQatar(now: Date = new Date()): DateKey {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: QATAR_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(now);
+  const parts = qatarDayFormat.formatToParts(now);
   const get = (type: string) => parts.find((p) => p.type === type)?.value;
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
 export function currentMonthKey(now: Date = new Date()): MonthKey {
   return monthKeyOf(todayInQatar(now));
+}
+
+/** Qatar is UTC+3 all year (no daylight saving). */
+const QATAR_UTC_OFFSET_MS = 3 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Milliseconds until the date changes in Qatar (midnight there, 21:00 UTC). */
+export function msUntilNextQatarDay(now: Date = new Date()): number {
+  const intoDay = (now.getTime() + QATAR_UTC_OFFSET_MS) % DAY_MS;
+  return DAY_MS - intoDay;
 }
 
 /** Today if it falls in the month, else the month's first (future) or last (past) day. */
@@ -123,4 +135,51 @@ export function formatWeekday(date: DateKey): string {
     weekday: "short",
     timeZone: "UTC",
   }).format(utcDate(date));
+}
+
+/** Column headings for `calendarWeeks`: the week starts on Sunday, as the Qatari work week does. */
+export const WEEKDAY_LABELS = [
+  "Sun",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat",
+] as const;
+
+/** 0 = Sunday … 6 = Saturday. */
+export function weekdayOf(date: DateKey): number {
+  return utcDate(date).getUTCDay();
+}
+
+/** The month as Sunday-first weeks of 7 cells; days outside the month are null. */
+export function calendarWeeks(month: MonthKey): (DateKey | null)[][] {
+  const { year, month: monthNumber } = parseMonth(month);
+  const days = daysInMonth(year, monthNumber);
+  const cells: (DateKey | null)[] = Array.from(
+    { length: weekdayOf(`${month}-01`) },
+    () => null,
+  );
+  for (let day = 1; day <= days; day++) cells.push(`${month}-${pad2(day)}`);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const weeks: (DateKey | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+const longWeekday = new Intl.DateTimeFormat("en-GB", {
+  weekday: "long",
+  timeZone: "UTC",
+});
+const longMonth = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  timeZone: "UTC",
+});
+
+/** "2026-11-21" → "Saturday, 21 November 2026" */
+export function formatLongDate(date: DateKey): string {
+  const value = utcDate(date);
+  return `${longWeekday.format(value)}, ${value.getUTCDate()} ${longMonth.format(value)} ${value.getUTCFullYear()}`;
 }

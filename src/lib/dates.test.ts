@@ -1,18 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
   addMonths,
+  calendarWeeks,
   clampMonth,
   currentMonthKey,
   defaultEntryDate,
+  formatLongDate,
   formatMonthLabel,
   formatShortDate,
   isDateKey,
   isMonthKey,
   lastDayOfMonth,
   monthBounds,
+  msUntilNextQatarDay,
   monthKeyOf,
   monthsBetween,
   todayInQatar,
+  weekdayOf,
+  WEEKDAY_LABELS,
 } from "./dates";
 
 describe("month keys", () => {
@@ -103,5 +108,73 @@ describe("labels", () => {
 
   it("formats short dates", () => {
     expect(formatShortDate("2026-12-05")).toBe("5 Dec");
+  });
+});
+
+describe("calendarWeeks", () => {
+  it("lays December 2026 out in Sunday-first weeks with blanks around it", () => {
+    const weeks = calendarWeeks("2026-12");
+    // 1 Dec 2026 is a Tuesday: Sun and Mon of the first week are blank.
+    expect(weeks[0]).toEqual([
+      null,
+      null,
+      "2026-12-01",
+      "2026-12-02",
+      "2026-12-03",
+      "2026-12-04",
+      "2026-12-05",
+    ]);
+    expect(weeks).toHaveLength(5);
+    expect(weeks.at(-1)).toEqual([
+      "2026-12-27",
+      "2026-12-28",
+      "2026-12-29",
+      "2026-12-30",
+      "2026-12-31",
+      null,
+      null,
+    ]);
+    expect(weeks.flat().filter(Boolean)).toHaveLength(31);
+  });
+
+  it("needs six rows when a long month starts late in the week", () => {
+    // 1 Jan 2027 is a Friday.
+    const weeks = calendarWeeks("2027-01");
+    expect(weeks).toHaveLength(6);
+    expect(weeks[0]?.indexOf("2027-01-01")).toBe(5);
+  });
+
+  it("handles a February that fills exactly four weeks", () => {
+    // 1 Feb 2026 is a Sunday and February 2026 has 28 days.
+    expect(calendarWeeks("2026-02")).toHaveLength(4);
+  });
+});
+
+describe("weekdays and long dates", () => {
+  it("numbers weekdays from Sunday", () => {
+    expect(weekdayOf("2026-12-06")).toBe(0);
+    expect(weekdayOf("2026-12-04")).toBe(5);
+    expect(WEEKDAY_LABELS).toEqual([
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+    ]);
+  });
+
+  it("formats a long date", () => {
+    expect(formatLongDate("2026-11-21")).toBe("Saturday, 21 November 2026");
+  });
+});
+
+describe("msUntilNextQatarDay", () => {
+  it("counts down to midnight in Qatar (21:00 UTC)", () => {
+    expect(msUntilNextQatarDay(new Date("2026-12-15T20:59:00Z"))).toBe(60_000);
+    expect(msUntilNextQatarDay(new Date("2026-12-15T21:00:00Z"))).toBe(
+      24 * 60 * 60 * 1000,
+    );
   });
 });

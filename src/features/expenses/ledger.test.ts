@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLedger, percentChange } from "./ledger";
+import { buildLedger, dailyTotals, percentChange } from "./ledger";
 import type { CatalogCategory, EntryView, Suggestion } from "./types";
 
 const item = (
@@ -146,5 +146,20 @@ describe("percentChange", () => {
 
   it("returns null without a baseline", () => {
     expect(percentChange(100, 0)).toBeNull();
+  });
+});
+
+describe("dailyTotals", () => {
+  it("adds up each day's expenses in the chosen currency", () => {
+    const entries = [
+      { ...entry("a", "tea", 300), spentOn: "2026-12-05" },
+      { ...entry("b", "lunch", 2500), spentOn: "2026-12-05" },
+      { ...entry("c", "uber", 1800), spentOn: "2026-12-07" },
+    ];
+    expect(Object.fromEntries(dailyTotals(entries, "QAR"))).toEqual({
+      "2026-12-05": 2800,
+      "2026-12-07": 1800,
+    });
+    expect(dailyTotals(entries, "PKR").get("2026-12-07")).toBe(1800 * 76);
   });
 });
