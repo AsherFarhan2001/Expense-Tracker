@@ -91,6 +91,14 @@ Phases follow `SPEC.md` §9. Each phase ended with `npm run check` and the e2e s
 - [x] Category heading toggles collapse/expand; remembered per device
 - [x] Tests: unit (calendar month rule), E2E (pre-start highlight, collapse survives reload)
 
+## Change request: install as an app (PWA) ✅
+
+- [x] Manifest: name, short name "Expenses", standalone, start URL `/`, brand colours, icons
+- [x] Icons generated from the logo: 192/512 (any), 512 maskable (Android), 180 apple-icon (iPhone)
+- [x] iPhone home-screen title; theme colours already follow light/dark
+- [x] PIN lock lets the manifest and icons through, so a locked phone can install the app
+- [x] Tests: unit (manifest, proxy allows install files but still locks pages), E2E (manifest + icons served as PNGs at the right sizes)
+
 ## Open choices (defaults applied, see SPEC §10)
 
 - Extra fixed items (Kahramaa, internet, Karwa, food delivery, gym, subscriptions, money sent home…): none added; add any in Settings

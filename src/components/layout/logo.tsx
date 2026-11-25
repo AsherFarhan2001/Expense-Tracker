@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { LOGO_BAND_PATH } from "./brand";
 
 /** Maroon tile with a serrated edge — a nod to the Qatar flag and a torn receipt. */
 export function LogoMark({ className }: { className?: string }) {
@@ -9,10 +10,7 @@ export function LogoMark({ className }: { className?: string }) {
       className={cn("size-6 shrink-0", className)}
     >
       <rect width="24" height="24" rx="6" className="fill-primary" />
-      <path
-        d="M4 4h4l2 2-2 2 2 2-2 2 2 2-2 2 2 2-2 2H4z"
-        className="fill-primary-foreground"
-      />
+      <path d={LOGO_BAND_PATH} className="fill-primary-foreground" />
     </svg>
   );
 }

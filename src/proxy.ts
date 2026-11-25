@@ -7,6 +7,20 @@ import {
 import { verifySessionToken } from "@/features/pin-lock/crypto";
 
 /**
+ * Install files (manifest and app icons) must load on a locked device, or a phone can't
+ * add the app to its home screen. Generated icon URLs have no file extension, so the
+ * matcher below can't skip them.
+ */
+function isInstallFile(pathname: string): boolean {
+  return (
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/apple-icon" ||
+    pathname === "/maskable-icon.png" ||
+    pathname.startsWith("/icon/")
+  );
+}
+
+/**
  * Optimistic PIN check: sends locked devices to /unlock. Server Actions still
  * verify the session themselves (requireUnlocked), since this is only a redirect.
  */
@@ -14,7 +28,9 @@ export function proxy(request: NextRequest) {
   if (!isPinEnabled()) return NextResponse.next();
 
   const { pathname, search } = request.nextUrl;
-  if (pathname === "/unlock") return NextResponse.next();
+  if (pathname === "/unlock" || isInstallFile(pathname)) {
+    return NextResponse.next();
+  }
 
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   if (verifySessionToken(token, getSessionSecret())) return NextResponse.next();

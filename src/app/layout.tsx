@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Instrument_Sans } from "next/font/google";
+import { BRAND } from "@/components/layout/brand";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { SiteHeader } from "@/components/layout/site-header";
 import { THEME_INIT_SCRIPT } from "@/components/layout/theme-script";
@@ -23,12 +24,17 @@ export const metadata: Metadata = {
     template: "%s · Expense Tracker",
   },
   description: "Monthly expenses in QAR and PKR",
+  applicationName: "Expense Tracker",
+  // Installed on an iPhone home screen: full-screen, with a name that isn't cut off.
+  appleWebApp: { capable: true, title: "Expenses" },
+  // Stop iOS turning long amounts such as 150,000 into phone-number links.
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f4f6" },
-    { media: "(prefers-color-scheme: dark)", color: "#111419" },
+    { media: "(prefers-color-scheme: light)", color: BRAND.lightBackground },
+    { media: "(prefers-color-scheme: dark)", color: BRAND.darkBackground },
   ],
 };
 

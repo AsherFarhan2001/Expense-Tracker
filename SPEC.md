@@ -1,6 +1,6 @@
 # Spec: Expense Tracker (Qatar · QAR/PKR)
 
-Status: **Approved 2026-11-21 · Built (Phases 0–6)**. Deployment waits on your Neon and Vercel accounts. Last updated: 2026-11-21
+Status: **Approved 2026-11-21 · Built (Phases 0–6) · Live** at https://expense-tracker-personal-bice.vercel.app (Vercel Hobby, functions in Frankfurt `fra1`; Neon Free via the Vercel integration, Frankfurt). Last updated: 2026-11-25
 
 > **Changes made while building** (decisions differ from the draft below where noted):
 >
@@ -15,6 +15,8 @@ Status: **Approved 2026-11-21 · Built (Phases 0–6)**. Deployment waits on you
 > - 2026-11-21: new **Search** page (story 10): every expense of one category (e.g. _Umrah_) or matching a word, across all months, with totals.
 > - 2026-11-21: the month page shows **today's date** and a **live calendar** of the month in the left column (story 11).
 > - 2026-11-21: before tracking starts, the calendar shows **today's month** so today is always highlighted on the home page; categories on the month page can be **collapsed and expanded** (story 12).
+> - 2026-11-25: deployed. Neon was created from Vercel's Storage tab (one `main` branch); local development stays on PGlite, so there is no Neon `dev` branch. The Vercel project's Framework Preset must be **Next.js** (it was auto-set to "Other" because the repo held only a README at import).
+> - 2026-11-25: the app is an **installable web app (PWA)** (story 13): web app manifest, app icons generated from the logo, iPhone home-screen title. No service worker and no offline mode: the data lives in Neon, so the app needs a connection anyway.
 
 ## 1. Objective
 
@@ -61,6 +63,11 @@ A personal web app to record and review monthly spending while living in Qatar, 
     - **Before tracking starts** (until 1 December 2026) the home page lists December, but the calendar shows **today's month with today highlighted**; its days are greyed out with a note saying when tracking starts.
     - On a **past month**, the calendar shows that month and a _Today_ link back to the current month.
 12. **Collapse categories** — Each category heading on the month page is a toggle (chevron + name) that hides or shows its items. Its total, share and menu stay visible while collapsed. Collapsed categories are remembered on that device (browser storage) and apply to every month.
+13. **Install as an app** — The site can be added to the phone's home screen and opens full-screen like an app (no browser bar):
+    - Name "Expense Tracker", short name **"Expenses"** under the icon.
+    - The icon is the logo (maroon tile with the serrated white band) at the sizes phones and desktops expect, including an Android "maskable" version that survives circle/squircle cropping and a 180 px iPhone icon.
+    - The install files (manifest and icons) load **without the PIN**, so a locked phone can still install it; every page stays behind the PIN.
+    - Updates arrive with each deploy; there is no store and no offline mode.
 
 ### Seed data
 
@@ -156,6 +163,9 @@ Expense-Tracker/
 └── src/
     ├── app/                   → routes only: load data via feature queries, render feature components
     │   ├── layout.tsx
+    │   ├── manifest.ts                → PWA manifest (/manifest.webmanifest)
+    │   ├── icon.tsx, apple-icon.tsx   → app icons generated from the logo (/icon/192, /icon/512, /apple-icon)
+    │   ├── maskable-icon.png/route.tsx → Android maskable icon
     │   ├── page.tsx                   → redirects to current month (Asia/Qatar)
     │   ├── months/[month]/page.tsx    → month view, month = YYYY-MM
     │   ├── history/page.tsx
@@ -324,6 +334,7 @@ Conventions:
 - [ ] The month page shows today's date and a calendar of all the month's days with weekday names; today is highlighted when it's in that month (and on the home page before tracking starts); tapping a day opens Add expense on that date.
 - [ ] Collapsing a category hides its items but keeps its total; it stays collapsed after a reload on the same device.
 - [ ] Works in current Chrome and Edge on desktop and at 375 px width with no horizontal scrolling.
+- [ ] The site serves a valid manifest (standalone, start URL `/`, 192 and 512 px icons plus a maskable one) and a 180 px iPhone icon; all of them load on a locked device.
 - [ ] Live site requires the PIN on a new device, remembers it for 30 days, and slows down repeated wrong guesses; local dev has no PIN.
 - [ ] `npm run check`, `npm run test:e2e` and `npm run build` all pass.
 
